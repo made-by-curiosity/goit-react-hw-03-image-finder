@@ -3,31 +3,46 @@ import { Searchbar } from '../Searchbar/Searchbar';
 import { PhotoApp } from './App.styled';
 import { Button } from 'components/Button/Button';
 import { Loader } from 'components/Loader/Loader';
-import { getPhotos } from '../../getPhotos';
+import { getPhotos } from '../../services/getPhotos';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import { Modal } from 'components/Modal/Modal';
 
 export class App extends Component {
   state = {
     images: [],
+    totalImages: 0,
     loading: false,
     searchQuery: '',
     page: 1,
     activePhotoIndex: 0,
     showModal: false,
+    perPage: 12,
   };
 
   async componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, page } = this.state;
+    this.startSearching(prevState);
+    this.loadingMore(prevState);
+  }
+
+  startSearching = async prevState => {
+    const { searchQuery, page, perPage } = this.state;
 
     if (prevState.searchQuery !== searchQuery) {
-      const response = await getPhotos(searchQuery, page);
+      const response = await getPhotos(searchQuery, page, perPage);
 
-      this.setState({ images: response.data.hits, loading: false });
+      this.setState({
+        images: response.data.hits,
+        loading: false,
+        totalImages: response.data.totalHits,
+      });
     }
+  };
+
+  loadingMore = async prevState => {
+    const { searchQuery, page, perPage } = this.state;
 
     if (prevState.page !== page && page !== 1) {
-      const response = await getPhotos(searchQuery, page);
+      const response = await getPhotos(searchQuery, page, perPage);
 
       this.setState(({ images }) => {
         return {
@@ -36,10 +51,22 @@ export class App extends Component {
         };
       });
     }
-  }
+  };
+
+  isContentLeft = () => {
+    const { totalImages, page, perPage } = this.state;
+
+    return totalImages > page * perPage;
+  };
 
   onSearch = ({ searchQuery }) => {
-    this.setState({ searchQuery, page: 1, loading: true });
+    this.setState({
+      searchQuery,
+      page: 1,
+      loading: true,
+      images: [],
+      totalImages: 0,
+    });
   };
 
   handleLoadMore = () => {
@@ -60,6 +87,7 @@ export class App extends Component {
 
   render() {
     const { images, loading, activePhotoIndex } = this.state;
+    const isContentLeft = this.isContentLeft();
 
     return (
       <PhotoApp>
@@ -69,7 +97,7 @@ export class App extends Component {
           setActivePhoto={this.setActivePhoto}
           toggleModal={this.toggleModal}
         />
-        {images.length > 0 && !loading && (
+        {images.length > 0 && !loading && isContentLeft && (
           <Button onLoadMore={this.handleLoadMore} />
         )}
         {loading && <Loader />}
