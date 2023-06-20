@@ -1,13 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal } from 'components/Modal/Modal';
+
 import { GalleryItem, GalleryPhoto } from './ImageGalleryItem.styled';
 
-export const ImageGalleryItem = ({ smallImgUrl, bigImgUrl }) => {
+export const ImageGalleryItem = ({ smallImgUrl, tags, onClick }) => {
   return (
-    <GalleryItem>
-      <GalleryPhoto src={smallImgUrl} alt="" />
-      <Modal bigImgUrl={bigImgUrl} />
+    <GalleryItem onClick={onClick}>
+      <GalleryPhoto src={smallImgUrl} alt={tags} />
     </GalleryItem>
   );
+};
+
+ImageGalleryItem.propTypes = {
+  smallImgUrl: PropTypes.string.isRequired,
+  tags: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
 };
